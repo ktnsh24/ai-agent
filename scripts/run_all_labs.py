@@ -36,6 +36,9 @@ BASE_URLS: dict[str, str] = {
 
 RESULTS_DIR = Path(__file__).parent / "lab_results"
 
+SERVER_RECOVERY_MAX_WAIT = 120
+SERVER_RECOVERY_INTERVAL = 5
+
 
 @dataclass
 class LabResult:
@@ -45,6 +48,51 @@ class LabResult:
     raw_responses: list[dict] = field(default_factory=list)
     passed: bool = False
     duration_ms: float = 0.0
+
+
+# ---------------------------------------------------------------------------
+# Crash-resilience helpers
+# ---------------------------------------------------------------------------
+
+def _wait_for_server(base_url: str, context: str = "") -> bool:
+    """Wait for the server to become healthy again after a crash."""
+    label = f" (after {context})" if context else ""
+    print(f"\n    🔄 Server unreachable{label} — waiting for recovery...", flush=True)
+    elapsed = 0
+    while elapsed < SERVER_RECOVERY_MAX_WAIT:
+        time.sleep(SERVER_RECOVERY_INTERVAL)
+        elapsed += SERVER_RECOVERY_INTERVAL
+        try:
+            resp = httpx.get(f"{base_url}/health", timeout=5)
+            if resp.status_code == 200:
+                print(f"    ✅ Server recovered after {elapsed}s", flush=True)
+                return True
+        except Exception:
+            pass
+        print(f"    ⏳ Still waiting... ({elapsed}s / {SERVER_RECOVERY_MAX_WAIT}s)", flush=True)
+    print(f"    ❌ Server did not recover within {SERVER_RECOVERY_MAX_WAIT}s", flush=True)
+    return False
+
+
+def _is_connection_error(e: Exception) -> bool:
+    """Check if an exception is a server connection/crash error."""
+    msg = str(e).lower()
+    return any(pattern in msg for pattern in [
+        "connection refused", "server disconnected", "connection reset",
+        "connection closed", "remotedisconnected", "broken pipe", "eof occurred",
+    ])
+
+
+def _retry_on_crash(base_url: str, fn, *args, context: str = "", max_retries: int = 2, **kwargs):
+    """Call fn(*args, **kwargs) with automatic retry if server crashes."""
+    for attempt in range(max_retries + 1):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            if _is_connection_error(e) and attempt < max_retries:
+                if _wait_for_server(base_url, context=f"{context}, attempt {attempt + 1}"):
+                    continue
+            raise
 
 
 # ---------------------------------------------------------------------------
@@ -58,11 +106,12 @@ def api(
     json_body: dict | None = None,
 ) -> httpx.Response:
     """Make an API request and return the response."""
+    base_url = str(client.base_url).rstrip("/")
     fn = getattr(client, method.lower())
     kwargs: dict = {}
     if json_body is not None:
         kwargs["json"] = json_body
-    return fn(path, **kwargs)
+    return _retry_on_crash(base_url, fn, path, context=f"{method} {path}", **kwargs)
 
 
 def check(result: LabResult, name: str, passed: bool, notes: str = "") -> None:
@@ -237,21 +286,27 @@ def lab_5_sse_streaming(client: httpx.Client) -> LabResult:
         check(result, "Response has latency_ms", "latency_ms" in r.json())
 
     # Streaming (collect SSE events)
-    try:
-        with client.stream("POST", "/v1/chat/stream", json={
-            "message": "What is 2+2?",
-        }) as stream:
-            events: list[str] = []
-            for line in stream.iter_lines():
-                if line.startswith("data:"):
-                    events.append(line)
-                if len(events) > 20:
-                    break
-            result.raw_responses.append({"streaming_events": len(events)})
-            check(result, "Streaming returns SSE events", len(events) > 0)
-    except Exception as e:
-        result.raw_responses.append({"streaming_error": str(e)})
-        check(result, "Streaming returns SSE events", False, notes=str(e))
+    base_url = str(client.base_url).rstrip("/")
+    stream_json = {"message": "What is 2+2?"}
+    for _attempt in range(3):
+        try:
+            with client.stream("POST", "/v1/chat/stream", json=stream_json) as stream:
+                events: list[str] = []
+                for line in stream.iter_lines():
+                    if line.startswith("data:"):
+                        events.append(line)
+                    if len(events) > 20:
+                        break
+                result.raw_responses.append({"streaming_events": len(events)})
+                check(result, "Streaming returns SSE events", len(events) > 0)
+            break
+        except Exception as e:
+            if _is_connection_error(e) and _attempt < 2:
+                if _wait_for_server(base_url, context=f"lab_5 streaming, attempt {_attempt + 1}"):
+                    continue
+            result.raw_responses.append({"streaming_error": str(e)})
+            check(result, "Streaming returns SSE events", False, notes=str(e))
+            break
 
     result.duration_ms = (time.time() - t0) * 1000
     return result
@@ -378,6 +433,8 @@ def run_labs(base_url: str, env: str, only: list[int] | None = None, dry_run: bo
             except Exception as e:
                 print(f"  Lab {num}: ERROR — {e}")
                 failed += 1
+                if _is_connection_error(e):
+                    _wait_for_server(base_url, context=f"lab {num} failure")
 
     print(f"\nResults: {passed} passed, {failed} failed")
     print(f"Details: {RESULTS_DIR / env}/")
