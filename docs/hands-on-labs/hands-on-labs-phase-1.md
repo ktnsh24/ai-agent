@@ -53,14 +53,14 @@ All labs run **locally for free**. Cloud costs if you deploy:
 
 ## 🫏 The Donkey Analogy — Understanding Phase 1 Agent Metrics
 
-Think of the agent as a smart donkey handling delivery jobs:
-
-- If it answers directly without tools, it takes the shortest path.
-- If it uses tools, it visits specialist stations (calculator, DB, web) before delivering.
-- If it remembers prior turns, it carries context between villages instead of starting over.
-
-In this phase, you measure whether the donkey picks the right route (tool choice),
-keeps context (conversation continuity), and stays healthy (service status).
+| Metric | 🫏 Donkey Analogy | What It Means for the Agent | How It's Calculated |
+|--------|-------------------|------------------------------|---------------------|
+| **Tool Selection** | Picks the right route — direct path vs. specialist stations | Agent decides whether to call tools or answer directly | LLM function-calling → match intent to tool schema → invoke or skip |
+| **Tool Accuracy** | Visits the *correct* specialist station, not a random one | The right tool is chosen for the task (calculator for math, DB for data) | Compare `tool_name` in response vs. expected tool for the query type |
+| **Conversation Continuity** | Carries context between villages instead of starting over | Multi-turn memory so follow-up questions work without repeating context | Session ID → append to conversation history → include in next LLM prompt |
+| **Service Health** | Checks the donkey is alive and ready for jobs | Confirms agent, LLM provider, and tool backends are all reachable | `GET /health` → poll each dependency → return aggregate status |
+| **Latency** | How quickly the donkey completes the delivery | End-to-end time from question to final answer, including any tool calls | `time_end − time_start` across full agent loop (ms) |
+| **Direct vs. Tool Response** | Shortest path (no stops) vs. multi-stop route | Whether the agent correctly identifies when tools are needed vs. not | Check response metadata: `tool_calls` field present or absent |
 
 ---
 

@@ -16,12 +16,12 @@
 
 ## 🫏 The Donkey Analogy — Understanding Phase 2 Agent Operations
 
-In Phase 2, the donkey now works in a busy city:
-
-- Streaming is the donkey reporting progress while still on the road.
-- Multi-tool chains are multiple stops before final delivery.
-- Provider switching is choosing a different road network without changing the package.
-- Docker deployment is putting the same donkey route into a reusable container truck.
+| Metric | 🫏 Donkey Analogy | What It Means for the Agent | How It's Calculated |
+|--------|-------------------|------------------------------|---------------------|
+| **Streaming** | Reports progress while still on the road | Real-time token delivery so the user sees partial answers immediately | SSE events → count `data:` frames → verify tokens arrive incrementally |
+| **Multi-Tool Chains** | Multiple stops before final delivery | Agent calls 2+ tools in sequence to answer a complex question | Count `tool_calls` in response → verify chain length ≥ 2 |
+| **Provider Switching** | Different road network, same package | Swap LLM backend (OpenAI ↔ Azure ↔ local) without changing agent logic | Change `CLOUD_PROVIDER` env → verify same tools + same answer quality |
+| **Docker Deployment** | Same donkey route in a reusable container truck | Reproducible agent stack with all tool backends included | `docker compose up` → build image → mount config → verify `/health` |
 
 ---
 
