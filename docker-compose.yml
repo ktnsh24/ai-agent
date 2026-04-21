@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8200:8200"
+    environment:
+      - CLOUD_PROVIDER=local
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - DATABASE_URL=sqlite+aiosqlite:///data/conversations.db
+      - TOOL_WEB_SEARCH_ENABLED=true
+      - TOOL_CALCULATOR_ENABLED=true
+      - TOOL_DATABASE_QUERY_ENABLED=true
+    volumes:
+      - agent_data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  agent_data:
