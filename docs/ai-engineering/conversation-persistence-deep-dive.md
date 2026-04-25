@@ -1,7 +1,9 @@
 # Conversation Persistence Deep Dive — AI Agent
 
 > **What:** Storing and retrieving chat history for multi-turn conversations
+>
 > **Why:** Without persistence, every request starts fresh — the agent has no memory
+>
 > **File:** `src/agent/conversation.py`
 
 ---

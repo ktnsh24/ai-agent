@@ -1,7 +1,9 @@
 # LangGraph Deep Dive — AI Agent
 
 > **What:** LangGraph provides a stateful, graph-based framework for building AI agents
+>
 > **Why:** Explicit control flow, debugging, human-in-the-loop, state persistence
+>
 > **File:** `src/agent/graph.py`
 
 ---

@@ -1,6 +1,7 @@
 # Hands-on Labs — Phase 2: Advanced Agent Features
 
 > **Labs 5-8:** Streaming, multi-tool chains, cloud providers, Docker deployment
+>
 > **Time:** ~2.5 hours total
 
 ---

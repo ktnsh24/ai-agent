@@ -1,6 +1,7 @@
 # Hands-on Labs — Phase 1: Agent Foundation
 
 > **Labs 1-4:** Build and test the core AI agent capabilities
+>
 > **Time:** ~2 hours total
 
 ---

@@ -1,6 +1,7 @@
 # Architecture Overview — AI Agent
 
 > **Pattern:** LangGraph StateGraph with ReAct loop + Strategy Pattern for providers
+>
 > **Framework:** FastAPI + LangGraph + LangChain
 
 ---

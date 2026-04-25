@@ -1,7 +1,9 @@
 # Tool Use Deep Dive — AI Agent
 
 > **What:** How the agent discovers, selects, and executes tools
+>
 > **Why:** Tools give LLMs access to real-time data, computation, and external systems
+>
 > **Files:** `src/tools/registry.py`, `src/tools/web_search.py`, `src/tools/calculator.py`, `src/tools/database_query.py`
 
 ---
