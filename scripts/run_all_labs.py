@@ -207,7 +207,7 @@ def lab_3_conversation_continuity(client: httpx.Client) -> LabResult:
     t0 = time.time()
 
     # Start conversation
-    r = api(client, "POST", "/v1/chat", json_body={"message": "My name is Ketan and I work at Odido."})
+    r = api(client, "POST", "/v1/chat", json_body={"message": "My name is Alice and I work at Acme Corp."})
     result.raw_responses.append({"start": r.json() if r.status_code == 200 else r.text})
     check(result, "Start conversation returns 200", r.status_code == 200)
 

@@ -123,7 +123,7 @@ Complex queries trigger multiple tool calls across iterations. The iteration cou
 
 ## Lab 7: Provider Switching
 
-> 🏢 **Business Context:** Odido needs multi-cloud resilience. If AWS Bedrock is down, the agent should switch to Azure OpenAI. During development, Ollama saves costs.
+> 🏢 **Business Context:** A multi-cloud platform needs resilience. If AWS Bedrock is down, the agent should switch to Azure OpenAI. During development, Ollama saves costs.
 
 ### Test Provider Configuration
 

@@ -161,7 +161,7 @@ Each tool has a specific purpose and input schema. The agent selects the right t
 ```bash
 # Start conversation
 RESPONSE=$(curl -s http://localhost:8200/v1/chat \
-  -d '{"message": "My name is Ketan and I work at Odido."}')
+  -d '{"message": "My name is Alice and I work at Acme Corp."}')
 echo $RESPONSE | jq '{message, conversation_id}'
 CONV_ID=$(echo $RESPONSE | jq -r '.conversation_id')
 

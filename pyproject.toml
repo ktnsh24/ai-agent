@@ -2,7 +2,7 @@
 name = "ai-agent"
 version = "0.1.0"
 description = "Phase 3 — AI Agent with LangGraph, tool use, and MCP client integration"
-authors = ["Ketan <ketan@odido.nl>"]
+authors = ["Ketan Sahu <ktnsh24@users.noreply.github.com>"]
 readme = "README.md"
 packages = [{include = "src"}]
 
