@@ -15,6 +15,7 @@
 - [Lab 5: Tool-Selection Sweep](#lab-5-tool-selection-sweep)
 - [Lab 6: Max Iterations Sweep](#lab-6-max-iterations-sweep)
 - [Lab 7: Eval Thresholds](#lab-7-eval-thresholds)
+- [Lab 8: LLM-as-Judge Evaluation](#lab-8-llm-as-judge-evaluation--can-a-smarter-llm-grade-the-donkeys-tool-choices)
 
 ---
 
@@ -212,3 +213,63 @@ For agents, also track "tool-call recall" — did the agent use the tool it shou
 
 ### 🫏 Donkey takeaway
 The report card itself can be lenient or strict — the donkey did the same delivery, but a strict teacher catches the day it skipped the warehouse and guessed.
+
+---
+
+## Lab 8: LLM-as-Judge Evaluation — "Can a smarter LLM grade the donkey's tool choices?"
+
+**Config:** `EVAL_MODE` (default: `rule_based`)
+**What it controls:** Whether evaluation uses Python rules (cheap, deterministic) or a second LLM call (expensive, semantic) — and for an agent, whether the judge also scores TOOL-SELECTION correctness, not just answer faithfulness.
+**Hypothesis:** Rule-based eval misses semantic hallucinations AND has no opinion on whether the agent picked the right tool ("did it actually need the calculator, or did it just answer from memory and get lucky?"). LLM-as-judge catches both at ~$0.001/eval.
+
+### Why this matters
+Rule-based evaluation (`EVAL_MODE=rule_based`) splits the answer into sentences, extracts keywords, and checks them against the tool-output context. It's free and instant — but it cannot tell whether the agent SHOULD have called a different tool, called none at all, or called the right tool with wrong arguments.
+
+LLM-as-judge (`EVAL_MODE=llm_judge`) sends the question, the tool-call trace (which tools, with what arguments), the tool outputs, and the final answer to a second cheap LLM (e.g. Claude Haiku, GPT-4o-mini) with a rubric that scores BOTH answer faithfulness AND tool-selection correctness. It catches the silent failure mode where the agent answered correctly from parametric memory while skipping the tool it was supposed to use.
+
+### Setup
+1. Add `EVAL_MODE=rule_based` to `.env`
+2. Pick a "judge" LLM in `.env`:
+   - Local: `JUDGE_LLM_PROVIDER=ollama` + `JUDGE_LLM_MODEL=llama3.2`
+   - AWS: `JUDGE_LLM_PROVIDER=bedrock` + `JUDGE_LLM_MODEL=anthropic.claude-haiku-...`
+   - Azure: `JUDGE_LLM_PROVIDER=azure_openai` + `JUDGE_LLM_MODEL=gpt-4o-mini`
+3. Implement the judge prompt (see template below) — it must take the tool-call trace, not just the final answer
+4. Run Q1–Q3 with both modes
+5. Compare faithfulness scores AND the new tool-selection score
+
+### The judge prompt template
+```text
+You are a strict evaluator of an agent's answer AND its tool use. Given:
+- QUESTION: {question}
+- AVAILABLE_TOOLS: {tool_catalog}     # name + description of every tool the agent could call
+- TOOL_CALL_TRACE: {trace}            # ordered list of {tool, args, output}
+- ANSWER: {answer}
+
+Score on:
+1. faithfulness (0.0–1.0): Did every claim in ANSWER come from a TOOL_CALL_TRACE output (not the model's memory)?
+2. tool_selection (0.0–1.0): For this QUESTION, did the agent pick the RIGHT tool(s)? (Q about weather → web_search; Q about arithmetic → calculator; Q about stored data → database.)
+3. tool_arguments (0.0–1.0): Were the arguments to each tool well-formed and minimal?
+4. relevance (0.0–1.0): Did the answer address the QUESTION?
+
+Return strict JSON: {"faithfulness": 0.x, "tool_selection": 0.x, "tool_arguments": 0.x, "relevance": 0.x, "wrong_tool_used": "...", "unsupported_claims": ["..."]}
+```
+
+### Results table (fill in as you run)
+| Question | Rule-based faithfulness | LLM-judge faithfulness | LLM-judge tool_selection | Divergence | Why? |
+|---|---|---|---|---|---|
+| Q1 (weather → web_search) | ___ | ___ | ___ | ___ | If agent answered from memory, tool_selection drops |
+| Q2 (compound interest → calculator) | ___ | ___ | ___ | ___ | LLM-judge catches "did the math in head" |
+| Q3 (yesterday's messages → database) | ___ | ___ | ___ | ___ | Both should score low if no DB call was made |
+
+### Cost comparison
+| Mode | Cost per eval | Latency added | Determinism |
+|---|---|---|---|
+| `rule_based` | €0 | ~1ms | ✅ Same input → same score |
+| `llm_judge` (Haiku) | ~$0.001 | ~500–1500ms | ❌ May vary slightly across runs |
+| `llm_judge` (GPT-4o) | ~$0.01 | ~1–3s | ❌ May vary |
+
+### What we learned
+Rule-based eval is the right default — it's free, fast, and catches obvious failures. For agents, LLM-as-judge is uniquely valuable because it can score TOOL-SELECTION CORRECTNESS, which rules cannot. Production pattern: run rule-based on every request, run LLM-judge on samples flagged as marginal or where the tool-call trace is empty (suspicious!), and run a daily nightly batch over the golden dataset. Never run LLM-judge on 100% of traffic — cost adds up.
+
+### 🫏 Donkey takeaway
+Rule-based eval is a clipboard-with-checkboxes the stable hand uses on every delivery. LLM-as-judge is the senior trainer who watches the donkey choose its route — and notices the day it skipped the warehouse, guessed the parcel from memory, and got lucky. The clipboard says "delivered"; the trainer says "but you took the wrong path".
