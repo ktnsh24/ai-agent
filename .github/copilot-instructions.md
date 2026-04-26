@@ -17,3 +17,10 @@ This is an AI agent that uses LLM function-calling to select and invoke tools (c
 - Tool registry with schema-based discovery
 - `api()` helper function for all HTTP calls (with retry logic)
 - Health endpoint at `/health` for dependency checks
+
+## Analogy vocabulary
+- Use the **courier / parcel-delivery** analogy for AI/LLM concepts when an analogy aids clarity.
+- LLM = courier; tokens = fuel or parcel weight; prompt = shipping manifest; context = parcels;
+  cache = pickup locker; rate limit = daily dispatch quota; output tokens cost 5× input = express delivery costs 5× standard.
+- **Never** use donkey, pigeon, pigeon-hole, stable, hay, bales, backpack, or "delivery note" vocabulary.
+- Prefer plain English over forced analogies — clarity beats cleverness.

@@ -52,16 +52,16 @@ All labs run **locally for free**. Cloud costs if you deploy:
 
 ---
 
-## 🫏 The Donkey Analogy — Understanding Phase 1 Agent Metrics
+## 🚚 The Courier Analogy — Understanding Phase 1 Agent Metrics
 
-| Metric | 🫏 Donkey Analogy | What It Means for the Agent | How It's Calculated |
+| Metric | 🚚 Courier Analogy | What It Means for the Agent | How It's Calculated |
 |--------|-------------------|------------------------------|---------------------|
-| **Tool Selection** | Picks the right route — direct path vs. specialist stations | Agent decides whether to call tools or answer directly | LLM function-calling → match intent to tool schema → invoke or skip |
-| **Tool Accuracy** | Visits the *correct* specialist station, not a random one | The right tool is chosen for the task (calculator for math, DB for data) | Compare `tool_name` in response vs. expected tool for the query type |
-| **Conversation Continuity** | Carries context between villages instead of starting over | Multi-turn memory so follow-up questions work without repeating context | Session ID → append to conversation history → include in next LLM prompt |
-| **Service Health** | Checks the donkey is alive and ready for jobs | Confirms agent, LLM provider, and tool backends are all reachable | `GET /health` → poll each dependency → return aggregate status |
-| **Latency** | How quickly the donkey completes the delivery | End-to-end time from question to final answer, including any tool calls | `time_end − time_start` across full agent loop (ms) |
-| **Direct vs. Tool Response** | Shortest path (no stops) vs. multi-stop route | Whether the agent correctly identifies when tools are needed vs. not | Check response metadata: `tool_calls` field present or absent |
+| **Tool Selection** | Picks the right route — direct delivery vs. specialist pickup points | Agent decides whether to call tools or answer directly | LLM function-calling → match intent to tool schema → invoke or skip |
+| **Tool Accuracy** | Stops at the *correct* pickup locker, not a random one | The right tool is chosen for the task (calculator for math, DB for data) | Compare `tool_name` in response vs. expected tool for the query type |
+| **Conversation Continuity** | Carries context between stops instead of starting each run over | Multi-turn memory so follow-up questions work without repeating context | Session ID → append to conversation history → include in next LLM prompt |
+| **Service Health** | Confirms the courier is available and ready for dispatch | Confirms agent, LLM provider, and tool backends are all reachable | `GET /health` → poll each dependency → return aggregate status |
+| **Latency** | How quickly the courier completes the delivery | End-to-end time from question to final answer, including any tool calls | `time_end − time_start` across full agent loop (ms) |
+| **Direct vs. Tool Response** | Direct drop-off (no stops) vs. multi-stop route | Whether the agent correctly identifies when tools are needed vs. not | Check response metadata: `tool_calls` field present or absent |
 
 ---
 

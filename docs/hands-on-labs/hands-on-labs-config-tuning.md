@@ -4,7 +4,7 @@
 >
 > **How to run:** Each lab changes ONE config in `.env`, runs the same 3 questions, records the metrics, and explains the trade-off.
 >
-> **🫏 Donkey lens:** Each lab ends with a donkey takeaway summarising the trade-off in plain language.
+> **Courier lens:** Each lab ends with a courier takeaway summarising the trade-off in plain language.
 
 ## Table of Contents
 - [Setup — Common to all labs](#setup--common-to-all-labs)
@@ -15,7 +15,7 @@
 - [Lab 5: Tool-Selection Sweep](#lab-5-tool-selection-sweep)
 - [Lab 6: Max Iterations Sweep](#lab-6-max-iterations-sweep)
 - [Lab 7: Eval Thresholds](#lab-7-eval-thresholds)
-- [Lab 8: LLM-as-Judge Evaluation](#lab-8-llm-as-judge-evaluation--can-a-smarter-llm-grade-the-donkeys-tool-choices)
+- [Lab 8: LLM-as-Judge Evaluation](#lab-8-llm-as-judge-evaluation--can-a-smarter-llm-grade-the-couriers-tool-choices)
 
 ---
 
@@ -30,7 +30,7 @@
 
 ---
 
-## Lab 1: Temperature Sweep — "How creative should the donkey be?"
+## Lab 1: Temperature Sweep — "How creative should the courier be?"
 
 **Config:** `LLM_TEMPERATURE` (default: `0.3`)
 **What it controls:** Sampling randomness for the LLM.
@@ -51,12 +51,12 @@
 ### What we learned
 For tool-using agents, low temperature is essential — high temp invents tool names and parameter shapes, which then fail validation and burn loop iterations.
 
-### 🫏 Donkey takeaway
-Cold donkey reads the delivery note and uses the right tool; warm donkey invents a tool that doesn't exist on the wagon.
+### 🚚 Courier takeaway
+A precise courier follows the shipping manifest and uses the right tool; an imprecise one invents a tool that doesn't exist.
 
 ---
 
-## Lab 2: System Prompt Sweep — "Strict vs lax delivery note"
+## Lab 2: System Prompt Sweep — "Strict vs lax shipping manifest"
 
 **Config:** `SYSTEM_PROMPT` (default: balanced)
 **What it controls:** The agent persona and tool-use rules prepended to every call.
@@ -77,12 +77,12 @@ Cold donkey reads the delivery note and uses the right tool; warm donkey invents
 ### What we learned
 The single biggest quality lever for agents — without an explicit "use tools, don't fabricate" rule, the LLM will skip tools whenever it thinks it knows the answer, which is almost always wrong for fresh data (weather, prices).
 
-### 🫏 Donkey takeaway
-A strict delivery note says "use the calculator on the wagon"; a lax note lets the donkey do mental arithmetic and get it wrong.
+### 🚚 Courier takeaway
+A strict shipping manifest says "use the calculator tool"; a lax one lets the courier estimate and get it wrong.
 
 ---
 
-## Lab 3: Model Swap — "Which donkey is on duty?"
+## Lab 3: Model Swap — "Which courier model is on duty?"
 
 **Config:** `OLLAMA_CHAT_MODEL` / `AWS_BEDROCK_MODEL` / `AZURE_OPENAI_DEPLOYMENT_NAME` (default: `llama3.2`)
 **What it controls:** The underlying LLM. Tool-calling quality varies wildly across models.
@@ -104,12 +104,12 @@ A strict delivery note says "use the calculator on the wagon"; a lax note lets t
 ### What we learned
 Tool-calling is a skill — small open models can do RAG fine but mangle JSON tool schemas. For agents, prefer models with explicit tool-use training (Claude, GPT-4o, Llama-3.1-Instruct ≥8B).
 
-### 🫏 Donkey takeaway
-Different donkeys have different training; ask a pony to pull a 4-tool wagon and it stalls — bring in the bigger donkey for the heavy load.
+### 🚚 Courier takeaway
+Different couriers have different training; a small van stalls on a four-tool route — bring in the freight truck for heavy loads.
 
 ---
 
-## Lab 4: Max Tokens Sweep — "Cargo capacity of the reply"
+## Lab 4: Max Tokens Sweep — "Parcel weight of the reply"
 
 **Config:** `LLM_MAX_TOKENS` (default: `2048`)
 **What it controls:** Hard cap on output tokens per LLM call (each loop iteration).
@@ -131,12 +131,12 @@ Different donkeys have different training; ask a pony to pull a 4-tool wagon and
 ### What we learned
 Truncated JSON tool calls fail validation and waste a whole loop iteration. Set max_tokens at least 4× your worst-case tool-arg payload.
 
-### 🫏 Donkey takeaway
-A small cargo crate cuts the tool name in half and the wagon refuses it; an oversized crate pays for empty space on every trip.
+### 🚚 Courier takeaway
+A tight parcel weight limit truncates the tool call mid-way and the depot rejects it; an oversized allowance pays for empty capacity on every trip.
 
 ---
 
-## Lab 5: Tool-Selection Sweep — "Which tools are on the wagon today?"
+## Lab 5: Tool-Selection Sweep — "Which tools are in the courier's kit today?"
 
 **Config:** `TOOL_*_ENABLED` flags (`TOOL_WEB_SEARCH_ENABLED`, `TOOL_CALCULATOR_ENABLED`, `TOOL_DATABASE_QUERY_ENABLED`, plus any new tools)
 **What it controls:** Which tools are exposed to the agent.
@@ -159,8 +159,8 @@ A small cargo crate cuts the tool name in half and the wagon refuses it; an over
 ### What we learned
 Tool selection accuracy follows an inverted-U: too few tools and the agent forces a square peg into a round hole, too many and the schema overflows attention. Curate the toolbox per agent role.
 
-### 🫏 Donkey takeaway
-A wagon with one tool means the donkey hammers everything; ten tools mean the donkey spends the day picking which to use; three is just right.
+### 🚚 Courier takeaway
+One tool means the courier forces every job to fit; ten tools mean spending the day picking which to use; three is just right.
 
 ---
 
@@ -185,8 +185,8 @@ A wagon with one tool means the donkey hammers everything; ten tools mean the do
 ### What we learned
 Cap iterations to the 95th-percentile of "successful" trace lengths — high enough to finish real tasks, low enough that a stuck agent gets killed before it burns tokens.
 
-### 🫏 Donkey takeaway
-A short leash makes the donkey give up before reaching the door; a long leash lets it wander the same corridor twenty times.
+### 🚚 Courier takeaway
+A short dispatch limit makes the courier give up before finishing the route; a long limit lets them circle the same block twenty times.
 
 ---
 
@@ -211,12 +211,12 @@ A short leash makes the donkey give up before reaching the door; a long leash le
 ### What we learned
 For agents, also track "tool-call recall" — did the agent use the tool it should have? Lax thresholds let an unused-tool answer slip through if the answer happens to be right.
 
-### 🫏 Donkey takeaway
-The report card itself can be lenient or strict — the donkey did the same delivery, but a strict teacher catches the day it skipped the warehouse and guessed.
+### 🚚 Courier takeaway
+The report card itself can be lenient or strict — the courier made the same delivery, but a strict auditor catches the day they skipped the depot and guessed.
 
 ---
 
-## Lab 8: LLM-as-Judge Evaluation — "Can a smarter LLM grade the donkey's tool choices?"
+## Lab 8: LLM-as-Judge Evaluation — "Can a smarter LLM grade the courier's tool choices?"
 
 **Config:** `EVAL_MODE` (default: `rule_based`)
 **What it controls:** Whether evaluation uses Python rules (cheap, deterministic) or a second LLM call (expensive, semantic) — and for an agent, whether the judge also scores TOOL-SELECTION correctness, not just answer faithfulness.
@@ -271,5 +271,5 @@ Return strict JSON: {"faithfulness": 0.x, "tool_selection": 0.x, "tool_arguments
 ### What we learned
 Rule-based eval is the right default — it's free, fast, and catches obvious failures. For agents, LLM-as-judge is uniquely valuable because it can score TOOL-SELECTION CORRECTNESS, which rules cannot. Production pattern: run rule-based on every request, run LLM-judge on samples flagged as marginal or where the tool-call trace is empty (suspicious!), and run a daily nightly batch over the golden dataset. Never run LLM-judge on 100% of traffic — cost adds up.
 
-### 🫏 Donkey takeaway
-Rule-based eval is a clipboard-with-checkboxes the stable hand uses on every delivery. LLM-as-judge is the senior trainer who watches the donkey choose its route — and notices the day it skipped the warehouse, guessed the parcel from memory, and got lucky. The clipboard says "delivered"; the trainer says "but you took the wrong path".
+### 🚚 Courier takeaway
+Rule-based eval is a clipboard-with-checkboxes the dispatcher uses on every delivery. LLM-as-judge is the senior auditor who watches the courier choose their route — and notices the day they skipped the depot, guessed the parcel contents from memory, and got lucky. The clipboard says "delivered"; the auditor says "but you took the wrong path".

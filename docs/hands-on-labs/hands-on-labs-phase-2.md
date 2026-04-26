@@ -15,14 +15,14 @@
 
 ---
 
-## 🫏 The Donkey Analogy — Understanding Phase 2 Agent Operations
+## 🚚 The Courier Analogy — Understanding Phase 2 Agent Operations
 
-| Metric | 🫏 Donkey Analogy | What It Means for the Agent | How It's Calculated |
+| Metric | 🚚 Courier Analogy | What It Means for the Agent | How It's Calculated |
 |--------|-------------------|------------------------------|---------------------|
 | **Streaming** | Reports progress while still on the road | Real-time token delivery so the user sees partial answers immediately | SSE events → count `data:` frames → verify tokens arrive incrementally |
-| **Multi-Tool Chains** | Multiple stops before final delivery | Agent calls 2+ tools in sequence to answer a complex question | Count `tool_calls` in response → verify chain length ≥ 2 |
-| **Provider Switching** | Different road network, same package | Swap LLM backend (OpenAI ↔ Azure ↔ local) without changing agent logic | Change `CLOUD_PROVIDER` env → verify same tools + same answer quality |
-| **Docker Deployment** | Same donkey route in a reusable container truck | Reproducible agent stack with all tool backends included | `docker compose up` → build image → mount config → verify `/health` |
+| **Multi-Tool Chains** | Multiple pickup stops before final delivery | Agent calls 2+ tools in sequence to answer a complex question | Count `tool_calls` in response → verify chain length ≥ 2 |
+| **Provider Switching** | Different road network, same parcel | Swap LLM backend (OpenAI ↔ Azure ↔ local) without changing agent logic | Change `CLOUD_PROVIDER` env → verify same tools + same answer quality |
+| **Docker Deployment** | Same courier route in a reproducible delivery van | Reproducible agent stack with all tool backends included | `docker compose up` → build image → mount config → verify `/health` |
 
 ---
 
