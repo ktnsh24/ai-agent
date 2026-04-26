@@ -6,9 +6,9 @@ RUN pip install --no-cache-dir poetry
 WORKDIR /app
 
 # Copy dependency files first (Docker layer caching)
-COPY pyproject.toml poetry.lock* ./
+COPY pyproject.toml poetry.lock* README.md ./
 RUN poetry config virtualenvs.create false \
-    && poetry install --only main --no-interaction --no-ansi
+    && poetry install --only main --no-interaction --no-ansi --no-root
 
 # Copy source code
 COPY src/ src/
