@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 
 from fastapi import APIRouter, HTTPException, Request
 from sse_starlette.sse import EventSourceResponse
 
-from src.models import AgentRequest, AgentResponse, AgentStatus
+from src.models import AgentRequest, AgentResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

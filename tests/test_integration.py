@@ -13,8 +13,6 @@ Test inventory (24 tests):
     TestHealthEndpoint          — Component health checks (2 tests)
 """
 
-import pytest
-from unittest.mock import AsyncMock
 
 from src.models import AgentResponse, AgentStatus, ToolCall
 

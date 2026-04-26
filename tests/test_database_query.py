@@ -1,8 +1,6 @@
 """Tests for the database query tool."""
 
-import pytest
 import sqlite3
-from pathlib import Path
 
 from src.tools.database_query import _is_safe_query, _ensure_sample_db, SAMPLE_DB_PATH
 
