@@ -4,6 +4,8 @@
 
 **Related:** [Architecture](../architecture-and-design/architecture.md) · [Tool Use Deep Dive](tool-use-deep-dive.md)
 
+**Shared baseline:** [Cost Analysis Playbook (portfolio-level)](../../../../docs/shared/ai-engineering/cost-analysis-playbook.md)
+
 ## Table of Contents
 
 - [Monthly Cost Summary](#monthly-cost-summary)

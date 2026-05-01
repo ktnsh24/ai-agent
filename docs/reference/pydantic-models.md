@@ -195,4 +195,4 @@ Extends `ConversationSummary` with:
 
 ---
 
-**Related:** [Architecture](../architecture-and-design/architecture.md) · [API Contract](../architecture-and-design/api-contract.md)
+**Related:** [Architecture](../architecture-and-design/architecture.md) · [API Routes Explained](../architecture-and-design/api-routes-explained.md)
