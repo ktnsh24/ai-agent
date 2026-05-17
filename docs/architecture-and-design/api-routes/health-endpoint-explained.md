@@ -17,7 +17,8 @@
 4. [What "Healthy" Actually Means Here](#what-healthy-actually-means-here)
 5. [Condition Matrix](#condition-matrix)
 6. [Honest Health Check](#honest-health-check)
-7. [TL;DR](#tldr)
+7. [Real-World Example](#real-world-example)
+8. [TL;DR](#tldr)
 
 ---
 
@@ -142,6 +143,90 @@ A "healthy" agent may fail on the very next `/v1/chat` request if, for example, 
 4. **Overall status does not use HTTP status codes.** A `"degraded"` response is returned with HTTP `200`. Some monitoring systems expect a non-`2xx` status code to signal degradation — the current design requires the monitoring system to parse the response body.
 
 5. **String-contains check is fragile.** A component whose normal status message happens to contain the substring `"error"` (e.g., a message like "No errors found — operational") would be incorrectly flagged as degraded. A structured status enum or boolean flag would be more robust than substring matching.
+
+---
+
+## Real-World Example
+
+Three scenarios showing the difference between healthy, degraded, and the deceptive gap between `"healthy"` and "actually working".
+
+---
+
+### Scenario A — All components healthy
+
+Agent started with valid Bedrock credentials, SQLite store accessible, all tools enabled.
+
+```
+GET /health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "components": {
+    "llm_provider": "BedrockProvider initialized — claude-3-5-sonnet-v2",
+    "tool_registry": "3 tools registered — web_search, calculator, database_query",
+    "conversation_store": "SQLiteConversationStore initialized",
+    "agent_graph": "AgentGraph initialized"
+  }
+}
+```
+
+This guarantees the four components were constructed without errors at startup. It does not mean the LLM is currently reachable, the SQLite file still exists, or the next `/v1/chat` request will succeed.
+
+---
+
+### Scenario B — LLM provider degraded at startup
+
+Agent started with an invalid Bedrock credential. The `BedrockProvider` constructor caught the error and recorded it in its status string.
+
+```
+GET /health
+```
+
+Response:
+
+```json
+{
+  "status": "degraded",
+  "components": {
+    "llm_provider": "BedrockProvider error — invalid credentials",
+    "tool_registry": "3 tools registered — web_search, calculator, database_query",
+    "conversation_store": "SQLiteConversationStore initialized",
+    "agent_graph": "AgentGraph error — LLM provider failed to initialize"
+  }
+}
+```
+
+One component has `"error"` in its status string → overall `"degraded"`. The caller must inspect individual component fields to find which one failed.
+
+---
+
+### Scenario C — Credentials expire after a healthy startup
+
+Agent started cleanly (Scenario A result). Two hours later, Bedrock IAM credentials rotate and expire. Every `/v1/chat` request now fails with a credentials error.
+
+```
+GET /health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "components": {
+    "llm_provider": "BedrockProvider initialized — claude-3-5-sonnet-v2",
+    "tool_registry": "3 tools registered — web_search, calculator, database_query",
+    "conversation_store": "SQLiteConversationStore initialized",
+    "agent_graph": "AgentGraph initialized"
+  }
+}
+```
+
+Still `"healthy"` — status strings were set at construction time and are never updated. The health endpoint has no way to detect post-startup credential expiry. A monitoring system relying solely on this endpoint would see no signal despite all chat requests failing.
 
 ---
 

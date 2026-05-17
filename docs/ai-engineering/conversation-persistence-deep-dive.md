@@ -12,7 +12,7 @@
 
 | Without Persistence | With Persistence |
 |--------------------|-----------------|
-| "What's my name?" → "I don't know" | "What's my name?" → "Your name is Ketan" |
+| "What's my name?" → "I don't know" | "What's my name?" → "Your name is Alex" |
 | Each request is independent | Multi-turn dialogue |
 | No context accumulation | Agent learns from conversation |
 

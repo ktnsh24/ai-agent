@@ -18,7 +18,8 @@
 5. [SQLite vs In-Memory Store Comparison](#sqlite-vs-in-memory-store-comparison)
 6. [Condition Matrix](#condition-matrix)
 7. [Honest Health Check](#honest-health-check)
-8. [TL;DR](#tldr)
+8. [Real-World Example](#real-world-example)
+9. [TL;DR](#tldr)
 
 ---
 
@@ -154,6 +155,94 @@ There is no soft delete, no archive, no recycle bin. Deletion is permanent and i
 5. **No connection pooling in SQLiteConversationStore.** The store opens and closes a database connection per operation — under concurrent load this creates contention on the SQLite file. A connection pool or a dedicated async database session would fix this.
 
 6. **`updated_at` is updated on every message add, not just on user turns.** Assistant replies and tool messages trigger a raw `UPDATE` on the conversation row — this is correct behaviour for "last activity" semantics but means `updated_at` reflects the last assistant write, not the last human interaction.
+
+---
+
+## Real-World Example
+
+> Using conversation `"a3f7c2b1d4e8"` from the [chat endpoint example](chat-endpoint-explained.md#real-world-example) — the Paris flight question with one tool call and an assistant reply. Three operations: list, read, delete.
+
+---
+
+### Step 1 — List all conversations
+
+```
+GET /v1/conversations
+```
+
+Response — metadata only, no message content:
+
+```json
+[
+  {
+    "id": "a3f7c2b1d4e8",
+    "title": "How much does a flight to Pa",
+    "created_at": "2026-05-02T09:14:22Z",
+    "updated_at": "2026-05-02T09:14:25Z"
+  }
+]
+```
+
+`updated_at` is `09:14:25` — three seconds after `created_at` — because the assistant reply was stored after the graph finished. No message content, no tool call details. With ten thousand conversations in the store, all ten thousand metadata objects would be returned in this single response.
+
+---
+
+### Step 2 — Get one conversation with messages
+
+```
+GET /v1/conversations/a3f7c2b1d4e8
+```
+
+Response (SQLite store — full fidelity):
+
+```json
+{
+  "id": "a3f7c2b1d4e8",
+  "title": "How much does a flight to Pa",
+  "created_at": "2026-05-02T09:14:22Z",
+  "updated_at": "2026-05-02T09:14:25Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "How much does a flight to Paris cost right now, and convert that to GBP?"
+    },
+    {
+      "role": "assistant",
+      "content": "Based on current search results, flights from London to Paris start from £89 one-way on EasyJet. That price is already in GBP — no conversion required."
+    }
+  ]
+}
+```
+
+If the chat handler also stores intermediate messages (the `AIMessage` with tool_calls and the `ToolMessage` with the search result), SQLite would reconstruct those rows too — each as the appropriate LangChain type. The in-memory store would silently omit any `role: tool` rows regardless.
+
+**Request for a conversation that does not exist:**
+
+```
+GET /v1/conversations/nonexistent  →  404 Not Found
+```
+
+---
+
+### Step 3 — Delete a conversation
+
+```
+DELETE /v1/conversations/a3f7c2b1d4e8
+```
+
+SQLite executes two steps in one transaction:
+
+1. `DELETE FROM messages WHERE conversation_id = 'a3f7c2b1d4e8'` — all message rows removed first
+2. `DELETE FROM conversations WHERE id = 'a3f7c2b1d4e8'` — conversation row removed
+
+Response: HTTP `200`. Follow-up reads confirm the deletion:
+
+```
+GET /v1/conversations/a3f7c2b1d4e8  →  404 Not Found
+GET /v1/conversations               →  []
+```
+
+No recovery. No archive. The data is gone.
 
 ---
 

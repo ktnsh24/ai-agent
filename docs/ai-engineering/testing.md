@@ -4,8 +4,6 @@
 
 **Related:** [Architecture](../architecture-and-design/architecture.md) · [Getting Started](../setup-and-tooling/getting-started.md)
 
-**Shared baseline:** [Testing Playbook (portfolio-level)](../../../../docs/shared/ai-engineering/testing-playbook.md)
-
 ---
 
 ## Test Pyramid

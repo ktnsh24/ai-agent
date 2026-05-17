@@ -20,7 +20,8 @@
 4. [MCP Dead Wiring](#mcp-dead-wiring)
 5. [Condition Matrix](#condition-matrix)
 6. [Honest Health Check](#honest-health-check)
-7. [TL;DR](#tldr)
+7. [Real-World Example](#real-world-example)
+8. [TL;DR](#tldr)
 
 ---
 
@@ -218,6 +219,86 @@ Setting `mcp_enabled=True` adds the provider object to the registry but contribu
 5. **MCP flag creates false expectations.** `mcp_enabled=True` in config suggests MCP tools are active, but no MCP tools are ever registered. The flag is misleading until Phase 4 is implemented.
 
 6. **Tool list is immutable without restart.** Enabling or disabling a tool, adding a new tool, or changing tool config requires an application restart — there is no dynamic tool registration API.
+
+---
+
+## Real-World Example
+
+Three scenarios: full tool set, partial tool set, and mock mode masquerading as real search.
+
+---
+
+### Scenario A — All three tools enabled, Tavily key configured
+
+Config: `tool_web_search_enabled=True`, `tool_calculator_enabled=True`, `tool_database_query_enabled=True`, `tavily_api_key` set.
+
+```
+GET /v1/tools
+```
+
+Response:
+
+```json
+[
+  {
+    "name": "web_search",
+    "description": "Search the web for current information.",
+    "parameters": {
+      "type": "object",
+      "properties": {"query": {"type": "string"}},
+      "required": ["query"]
+    }
+  },
+  {
+    "name": "calculator",
+    "description": "Evaluate a mathematical expression safely.",
+    "parameters": {
+      "type": "object",
+      "properties": {"expression": {"type": "string"}},
+      "required": ["expression"]
+    }
+  },
+  {
+    "name": "database_query",
+    "description": "Query the sample product and orders database.",
+    "parameters": {
+      "type": "object",
+      "properties": {"query": {"type": "string"}},
+      "required": ["query"]
+    }
+  }
+]
+```
+
+These three schemas are injected into every LLM call via `.bind_tools()` at graph construction time. The LLM can include any of these in its `tool_calls` field.
+
+---
+
+### Scenario B — Only calculator enabled
+
+Config: `tool_web_search_enabled=False`, `tool_calculator_enabled=True`, `tool_database_query_enabled=False`.
+
+```
+GET /v1/tools  →  [{"name": "calculator", ...}]
+```
+
+Only the calculator schema is injected into LLM calls. If a user asks `"What is the current price of a flight to Paris?"`, the LLM has no `web_search` function definition available — it will answer from training data or tell the user it cannot search. No tool call will be attempted because the schema is not in scope.
+
+---
+
+### Scenario C — web_search enabled but no Tavily key (mock mode)
+
+Config: `tool_web_search_enabled=True`, `tavily_api_key` not set.
+
+`GET /v1/tools` still returns `web_search` in the list — the mock strategy is selected silently at startup and is not reflected in the tool name or description.
+
+When the LLM calls `web_search("London to Paris flight price today")`, the mock receives the query, finds no match for `"weather"` or `"news"`, and returns the default hardcoded response:
+
+```
+"Here is some general information about your search query..."
+```
+
+The LLM bases its answer on this mock result. Neither the tool list nor the response body contains any indicator that mock mode is active — the caller has no way to distinguish a real Tavily search from a hardcoded placeholder.
 
 ---
 

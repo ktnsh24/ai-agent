@@ -8,9 +8,10 @@ This document was consolidated at portfolio level to keep repo docs focused and 
 
 ## Repo-specific lab files (ai-agent)
 
-- [Phase 1](./hands-on-labs-phase-1.md)
-- [Phase 2](./hands-on-labs-phase-2.md)
-- [Config Tuning](./hands-on-labs-config-tuning.md)
+- [Phase 1](./hands-on-labs-phase-1.md) — Labs 1–4: first interaction, tools, memory, health
+- [Phase 2](./hands-on-labs-phase-2.md) — Labs 5–8: streaming, multi-tool chains, provider switching, Docker
+- [Config Tuning](./hands-on-labs-config-tuning.md) — Labs 1–8: temperature, prompt, model, tokens, tool flags, iterations, eval, LLM-judge
+- [Metrics Validation](./hands-on-labs-metrics-validation.md) — Labs 9–13: break-and-fix validation, before/after metrics, business dashboard
 
 ## Mode reminder
 

@@ -20,7 +20,8 @@
 6. [Step 4 — Conversation Store Write](#step-4--conversation-store-write)
 7. [Condition Matrix](#condition-matrix)
 8. [Honest Health Check](#honest-health-check)
-9. [TL;DR](#tldr)
+9. [Real-World Example](#real-world-example)
+10. [TL;DR](#tldr)
 
 ---
 
@@ -172,6 +173,96 @@ thinking → [tool_call × N] → token × W → done
 5. **No auth, no rate limiting.** Identical to the non-streaming endpoint — any caller can open unlimited SSE connections and drive up LLM costs without restriction.
 
 6. **In-memory store loses tool call history on replay.** Identical to the non-streaming endpoint — `ToolMessage` objects are not reconstructed by `InMemoryConversationStore`, so continued conversations via in-memory store do not include prior tool results in the LLM's context.
+
+---
+
+## Real-World Example
+
+> Same flight-to-Paris question as the [chat endpoint example](chat-endpoint-explained.md#real-world-example), but via `POST /v1/chat/stream` to show the SSE event sequence in order.
+
+---
+
+### The request
+
+```json
+POST /v1/chat/stream
+{
+  "message": "How much does a flight to Paris cost right now, and convert that to GBP?",
+  "conversation_id": null,
+  "max_iterations": 5
+}
+```
+
+No `conversation_id` — new thread.
+
+---
+
+### Step 1 — Conversation creation
+
+Identical to the non-streaming endpoint. Store creates `id: "a3f7c2b1d4e8"`, `title: "How much does a flight to Pa"`. User message persisted before anything else runs. SSE connection is now open — but silent.
+
+---
+
+### Step 2 — Silent blocking period
+
+The generator has not started. The graph runs synchronously and to completion first:
+
+- Iteration 1: `web_search("London to Paris flight price today")` → `£89 EasyJet`
+- Iteration 2: LLM produces plain text answer — no calculator needed
+
+Client receives no events during this period. Full response is in memory. Generator begins.
+
+---
+
+### Step 3 — SSE event stream
+
+Events arrive at the client in this fixed order:
+
+```
+event: thinking
+data: {"content": "I'm processing your request..."}
+
+event: tool_call
+data: {"name": "web_search", "args": {"query": "London to Paris flight price today"}}
+
+event: token
+data: {"content": "Based"}
+
+event: token
+data: {"content": "on"}
+
+event: token
+data: {"content": "current"}
+
+... (one event per space-separated word)
+
+event: done
+data: {
+  "conversation_id": "a3f7c2b1d4e8",
+  "message": "Based on current search results, flights from London to Paris start from £89 one-way on EasyJet. That price is already in GBP — no conversion required.",
+  "tool_calls_made": [{"name": "web_search", "args": {"query": "London to Paris flight price today"}}],
+  "iterations": 2,
+  "status": "COMPLETE",
+  "model": "claude-3-5-sonnet-v2",
+  "total_tokens": 312,
+  "latency_ms": 1840.0
+}
+```
+
+**Key observations:**
+
+- `thinking` fires immediately when the generator starts — the graph already finished by this point; the label is misleading
+- The `tool_call` event is reconstructed from the finished message list, not emitted in real time when the tool ran
+- All `token` events arrive as a burst with no delay between words — the full response was computed before the first token event
+- `done` carries the same `AgentResponse` payload as a non-streaming `/v1/chat` call
+
+---
+
+### Step 4 — Conversation store write
+
+After `done` is emitted, the assistant reply is written to the store: `role: assistant`, `content: "Based on current search results..."`. Conversation `updated_at` refreshed.
+
+**If the client disconnects before this point** (mid-token stream, before `done`), the store write never happens — the conversation has the user's question with no reply.
 
 ---
 
