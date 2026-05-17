@@ -79,6 +79,7 @@ class AgentGraph:
             """Call the LLM with current messages."""
             messages = state["messages"]
             response = llm_with_tools.invoke(messages)
+            print(messages)
             return {
                 "messages": [response],
                 "iterations": state["iterations"] + 1,

@@ -6,7 +6,16 @@ import json
 import logging
 
 from fastapi import APIRouter, HTTPException, Request
-from sse_starlette.sse import EventSourceResponse
+try:
+    from sse_starlette.sse import EventSourceResponse
+except Exception:
+    # Optional dependency: fall back to a minimal StreamingResponse-based
+    # EventSourceResponse so the streaming endpoint still works in dev.
+    from starlette.responses import StreamingResponse
+
+    class EventSourceResponse(StreamingResponse):
+        def __init__(self, content, status_code: int = 200, headers=None, media_type: str = "text/event-stream"):
+            super().__init__(content, status_code=status_code, headers=headers, media_type=media_type)
 
 from src.models import AgentRequest, AgentResponse
 
