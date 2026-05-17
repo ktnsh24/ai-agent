@@ -207,7 +207,7 @@ curl http://localhost:8200/health | jq
 ```bash
 # Start a conversation
 RESPONSE=$(curl -s -X POST http://localhost:8200/v1/chat \
-  -d '{"message": "Remember that my name is Alex."}')
+  -d '{"message": "Remember that my name is Ketan."}')
 CONV_ID=$(echo $RESPONSE | jq -r '.conversation_id')
 
 # Continue the conversation
